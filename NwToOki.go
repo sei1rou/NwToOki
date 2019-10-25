@@ -408,7 +408,7 @@ func main() {
 		//  88:HbA1c
 		//  89:下限値
 		//  90:上限値
-		Eattime, _ := strconv.Atoi(record[108])
+		Eattime, _ := strconv.ParseFloat(record[108], 32)
 		if record[34] == "" {
 			if record[35] == "" {
 				log.Print("血糖・HbA1cなし:" + errPersonalInfo + "\r\n")
@@ -769,11 +769,11 @@ func main() {
 		}
 		out_record = append(out_record, YesNo(record[93]))
 
-		//  153:問　1年間の体重変化±3kg以上
-		if YesNo(record[94]) == "err" {
-			log.Print("1年間の体重変化エラー:" + errPersonalInfo + "\r\n")
+		//  153:問　食事をかんで食べる時の状態
+		if Eat2(record[94]) == "err" {
+			log.Print("食事をかんで食べる時の状態:" + errPersonalInfo + "\r\n")
 		}
-		out_record = append(out_record, YesNo(record[94]))
+		out_record = append(out_record, Eat2(record[94]))
 
 		//  154:問　食べ方（早食い）
 		if Eat(record[95]) == "err" {
@@ -787,11 +787,11 @@ func main() {
 		}
 		out_record = append(out_record, YesNo(record[96]))
 
-		//  156:問　食べ方（夜食/間食）3回/週
-		if YesNo(record[97]) == "err" {
-			log.Print("夜食エラー:" + errPersonalInfo + "\r\n")
+		//  156:問　朝昼夕以外に間食や甘い飲み物を摂取
+		if Drink(record[97]) == "err" {
+			log.Print("朝昼夕以外に間食や甘い飲み物を摂取:" + errPersonalInfo + "\r\n")
 		}
-		out_record = append(out_record, YesNo(record[97]))
+		out_record = append(out_record, Drink(record[97]))
 
 		//  157:問　朝食抜き3回/週
 		if YesNo(record[98]) == "err" {
@@ -861,8 +861,15 @@ func main() {
 		out_record = append(out_record, "")
 
 		//  171:採血時間(食後)
-		if (record[107] == "とった") && (Eattime < 10) {
-			out_record = append(out_record, "1")
+		if record[107] == "とった" {
+			switch {
+			case Eattime < 3.5:
+				out_record = append(out_record, "4")
+			case Eattime < 10:
+				out_record = append(out_record, "3")
+			default:
+				out_record = append(out_record, "2")
+			}
 		} else {
 			out_record = append(out_record, "2")
 		}
@@ -1140,6 +1147,40 @@ func Eat(s string) string {
 	case "普通":
 		s = "2"
 	case "遅い":
+		s = "3"
+	default:
+		s = "err"
+	}
+	return s
+}
+
+func Eat2(s string) string {
+
+	switch s {
+	case "":
+		s = ""
+	case "何でも":
+		s = "1"
+	case "かみにくい":
+		s = "2"
+	case "ほとんどかめない":
+		s = "3"
+	default:
+		s = "err"
+	}
+	return s
+}
+
+func Drink(s string) string {
+
+	switch s {
+	case "":
+		s = ""
+	case "毎日":
+		s = "1"
+	case "時々":
+		s = "2"
+	case "ほとんど摂取しない":
 		s = "3"
 	default:
 		s = "err"
